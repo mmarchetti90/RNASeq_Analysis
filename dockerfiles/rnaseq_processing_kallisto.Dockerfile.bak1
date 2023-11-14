@@ -1,0 +1,33 @@
+FROM ubuntu:latest
+
+ARG KALLISTO_VERSION=v0.50.1
+
+### INSTALLING PIPELINE PACKAGES ----------- ###
+
+## Basic resources
+RUN apt-get update && \
+    apt-get -q -y --no-install-recommends install \
+        autoconf \
+        cmake \
+        libhdf5-dev \
+        make \
+        zlib1g-dev \
+        wget && \
+    apt-get clean
+
+# Donwload binaries
+RUN cd /tmp && \
+    wget --no-check-certificate https://github.com/pachterlab/kallisto/releases/download/${KALLISTO_VERSION}/kallisto_linux-${KALLISTO_VERSION}.tar.gz && \
+    tar -xzf kallisto_linux-${KALLISTO_VERSION}.tar.gz -C /home && \
+    rm /tmp/kallisto_linux-${KALLISTO_VERSION}.tar.gz
+
+## Adding Kallisto to PATH
+ENV PATH $PATH:/home/kallisto
+
+### SETTING WORKING ENVIRONMENT ------------ ###
+
+## Set workdir to /home/
+WORKDIR /home/
+
+## Launch bash automatically
+CMD ["/bin/bash"]

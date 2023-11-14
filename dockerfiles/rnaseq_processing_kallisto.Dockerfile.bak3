@@ -1,0 +1,35 @@
+FROM ubuntu:latest
+
+### INSTALLING PIPELINE PACKAGES ----------- ###
+
+# Installing dependencies
+RUN apt-get update && \
+    apt-get -q -y --no-install-recommends install \
+        autoconf \
+        cmake \
+        git \
+        libhdf5-dev \
+        make \
+        zlib1g-dev && \
+    apt-get clean
+
+# Installing Kallisto
+RUN git config http.sslVerify false && \
+    git clone https://github.com/pachterlab/kallisto.git && \
+    cd kallisto/ext/htslib && \
+    autoheader && \
+    autoconf && \
+    cd ../../ && \
+    mkdir build && \
+    cd build && \
+    cmake -DUSE_HDF5=ON .. && \
+    make && \
+    make install
+
+### SETTING WORKING ENVIRONMENT ------------ ###
+
+## Set workdir to /home/
+WORKDIR /home/
+
+## Launch bash automatically
+CMD ["/bin/bash"]
