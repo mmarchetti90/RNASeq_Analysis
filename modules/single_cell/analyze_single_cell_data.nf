@@ -14,7 +14,7 @@ process AnalyzeSingleCellData {
   path "*.{h5,hdf5}"
   
   """
-  python ${scripts_dir}/singel_cell/tenx_scrnaseq_analysis.py --min_counts 500 --min_detected_genes 500 --n_neighbors 5,30,50 --input_dir ./
+  python ${scripts_dir}/single_cell/tenx_scrnaseq_analysis.py --min_counts 500 --min_detected_genes 500 --n_neighbors 5,30,50 --input_dir ./
   """
 
 }
