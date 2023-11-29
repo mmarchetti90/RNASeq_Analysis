@@ -6,7 +6,7 @@ process TrimFastQ {
   publishDir "${projectDir}/${params.reports_dir}/${params.fastqc_subdir}", mode: "copy", pattern: "*_fastqc.{html,zip}"
 
   input:
-  tuple val(read_id), val(read1), val(read2)
+  tuple val(read_id), path(read1), path(read2)
 
   output:
   path "*_trimming_report.txt", optional: true, emit: trimming_reports
