@@ -318,7 +318,7 @@ for(name in names(datasets)) {
   for(ontology in c("BP", "MF", "CC")) {
     
     output_name <- paste("Enrichment-GO", ontology, "_", name, "_", gsub("DEA_", "", parameters[1]), sep = "")
-    runEnrichGO(output_name, org_db, ontology, datasets[[name]])
+    enrichment_data <- runEnrichGO(output_name, org_db, ontology, datasets[[name]])
     
     data_name <- paste("Enrichment_", ontology, "_", name, sep = "")
     enrichment_analyses[[data_name]] <- enrichment_data
