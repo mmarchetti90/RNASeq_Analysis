@@ -35,6 +35,12 @@ nextflow run [OPTIONS] --metadata_path "/path/to/metadata/file" rnaseq_analysis.
 		analyses are done as well. Useful if dependencies are not on the server.
 		(Default, true)
 
+--trim_reads
+
+		If "true", reads are trimmed with Trim-galore prior to alignment with STAR in standard,
+		gene_lvl, and transcript_lvl profiles.
+		(Default, true)
+
 --read_length
 
 		Used for STAR index generation.

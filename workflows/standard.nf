@@ -2,6 +2,7 @@
 // ----------------Workflow---------------- //
 
 include { ParseReadsList } from '../modules/parse_reads_list/parse_reads_list.nf'
+include { TrimFastQ } from '../modules/trimgalore/trimgalore.nf'
 include { RunFastQC } from '../modules/fastqc/run_fastqc.nf'
 include { GenerateStarIndex } from '../modules/star/generate_star_index.nf'
 include { RunSTAR } from '../modules/star/run_star_standard_rna.nf'
@@ -93,15 +94,33 @@ workflow STANDARD {
     .flatten()
     .set{ comparison_files }
   
-  // FASTQC ------------------------------- //
+  // READS QC ----------------------------- //
 
-  // Process runs only if fastq file exists
-  RunFastQC(raw_reads)
+  if (params.trim_reads == true) {
+  
+    // TRIMGALORE --------------------------- //
+
+    // Trimming adapters
+    TrimFastQ(raw_reads)
+
+    star_input = TrimFastQ.out.trimmed_fastq_files
+
+  }
+  else {
+
+    // FASTQC ------------------------------- //
+
+    // Basic fastq files QC
+    RunFastQC(raw_reads)
+
+    star_input = raw_reads
+
+  }
 
   // STAR ALIGNMENT ----------------------- //
 
   // Run STAR alignment
-  RunSTAR(star_index, raw_reads)
+  RunSTAR(star_index, star_input)
 
   // Merge gene count files
   MergeGeneCounts(RunSTAR.out.gene_counts.collect(), "Gene")
