@@ -64,8 +64,8 @@ runDEA <- function(params, cnts, des) {
 	# Creating a DESeq2 data matrix
 	dds <- DESeqDataSetFromMatrix(countData = cnts, colData = des$sample_info, design = des$formula)
 
-	# Filtering out genes with too few reads
-	dds <- dds[rowSums(counts(dds)) >= as.integer(params[3]),]
+	# Creating a DESeq2 data matrix
+	dds <- DESeqDataSetFromMatrix(countData = cnts, colData = des$sample_info, design = des$formula)
 
 	# Finding parameter to relevel
 	for(col in colnames(des$sample_info)) {
