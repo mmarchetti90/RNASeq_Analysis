@@ -56,7 +56,7 @@ importDesign <- function(design_file) {
 runDEA <- function(params, cnts, des) {
 
 	# Removing samples from design not in counts table
-  	des$sample_info <- subset(des$sample_info, rownames(des$sample_info) %in% colnames(cnts))
+    des$sample_info <- subset(des$sample_info, rownames(des$sample_info) %in% colnames(cnts))
   	
 	# Filtering and ordering counts samples
 	cnts <- cnts[, rownames(des$sample_info)]
@@ -64,8 +64,8 @@ runDEA <- function(params, cnts, des) {
 	# Creating a DESeq2 data matrix
 	dds <- DESeqDataSetFromMatrix(countData = cnts, colData = des$sample_info, design = des$formula)
 
-	# Creating a DESeq2 data matrix
-	dds <- DESeqDataSetFromMatrix(countData = cnts, colData = des$sample_info, design = des$formula)
+	# Filtering out genes with too few reads in more than half the samples
+	dds <- dds[rowSums(counts(dds) >= as.integer(params[3])) >= ncol(dds) / 2,]
 
 	# Finding parameter to relevel
 	for(col in colnames(des$sample_info)) {
@@ -129,13 +129,18 @@ runDEA <- function(params, cnts, des) {
 	  xlab("Log10 Gene Mean") +
 	  ylab("Log10 Gene Variance")
 	ggsave(filename=output_name, dpi=300)
-	
-	# Volcano plot
+
+	# Count genes by behaviour
+	genes_up <- sum(analysis$log2FoldChange > 0 & analysis$padj < as.double(params[4]), na.rm = TRUE)
+	genes_down <- sum(analysis$log2FoldChange < 0 & analysis$padj < as.double(params[4]), na.rm = TRUE)
+	genes_ns <- sum(analysis$padj > as.double(params[4]), na.rm = TRUE)
+
+	# Remove genes with NA padj
+	analysis <- subset(analysis, ! is.na(analysis$padj))
+
+	# Prepare data for Volcano plot
 	fold_change <- analysis$log2FoldChange
 	log_pval <- - log10(analysis$padj)
-	genes_up <- sum(fold_change > 0 & log_pval > - log10(as.double(params[4])), na.rm = TRUE)
-	genes_down <- sum(fold_change < 0 & log_pval > - log10(as.double(params[4])), na.rm = TRUE)
-	genes_ns <- sum(log_pval <= - log10(as.double(params[4])), na.rm = TRUE)
 	color <- rep(paste("NS (", genes_ns, ")", sep = ""), length(fold_change))
 	color[fold_change < 0 & log_pval > - log10(as.double(params[4]))] <- paste("Down (", genes_down, ")", sep = "")
 	color[fold_change > 0 & log_pval > - log10(as.double(params[4]))] <- paste("Up (", genes_up, ")", sep = "")
@@ -143,6 +148,8 @@ runDEA <- function(params, cnts, des) {
 	names(color_palette) <- c(paste("Up (", genes_up, ")", sep = ""),
 	                          paste("Down (", genes_down, ")", sep = ""),
 	                          paste("NS (", genes_ns, ")", sep = ""))
+	
+	# Volcano plot
 	output_name <- paste("DEA_", des$analysis_name, "_VolcanoPlot.png", sep = "")
 	qplot(fold_change, log_pval, fill = factor(color)) +
 	  geom_point(shape = 21, color = "black", size = 3, stroke = 0.5) +
