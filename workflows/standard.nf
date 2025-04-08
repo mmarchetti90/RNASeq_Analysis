@@ -8,7 +8,6 @@ include { GenerateStarIndex } from '../modules/star/generate_star_index.nf'
 include { RunSTAR } from '../modules/star/run_star_standard_rna.nf'
 include { MergeCounts as MergeGeneCounts } from '../modules/merge_counts/merge_counts.nf'
 include { RunDESeq2 } from '../modules/differential_analysis/run_deseq2.nf'
-include { FindEnrichment } from '../modules/cluster_profiler/find_enrichment.nf'
 include { CountExons } from '../modules/count_exons/count_exons.nf'
 include { MergeCounts as MergeExonCounts } from '../modules/merge_counts/merge_counts.nf'
 include { AddGeneInfo } from '../modules/count_exons/add_gene_info.nf'
@@ -150,11 +149,6 @@ workflow STANDARD {
 
     // Differential gene expression analysis with DESeq2
     RunDESeq2(scripts_dir, MergeGeneCounts.out.merged_counts, comparison_files)
-
-    // GENE LEVEL ENRICHMENT ANALYSIS ----- //
-
-    // Enrichment analysis with clusterProfiler
-    FindEnrichment(scripts_dir, RunDESeq2.out.dea_files)
 
     // DIFFERENTIAL EXON USAGE ------------ //
 

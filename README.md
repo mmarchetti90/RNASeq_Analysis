@@ -12,7 +12,7 @@ nextflow run [OPTIONS] --metadata_path "/path/to/metadata/file" rnaseq_analysis.
 -profile
 
 		If not specified or equal to "standard", the sample is processed as a bulk RNASeq
-		experiment with both a gene-level and transcript-level analysis.
+		experiment with both a gene-level and transcript-level analyses.
 
 		If equal to "gene_lvl", the sample is processed as a bulk RNASeq experiment with a
 		gene-level analysis only.

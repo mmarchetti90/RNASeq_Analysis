@@ -9,7 +9,7 @@ process GenerateKallistoIndex {
   path "kallisto_index", emit: kallisto_index
 
   """
-  kallisto index -i kallisto_index ${transcripts_fasta}
+  kallisto index -t \$SLURM_CPUS_ON_NODE -i kallisto_index ${transcripts_fasta}
   """
 
 }

@@ -10,9 +10,6 @@ parseArgs <- function() {
   # Read command line arguments
   args <- commandArgs()
   
-  # Species
-  species <- args[match("--species", args) + 1]
-  
   # Genome annotation gtf file location
   genome_annotation <- args[match("--genome_annotation", args) + 1]
   
@@ -33,50 +30,7 @@ parseArgs <- function() {
     
   }
   
-  # msigdbr categories file
-  if("--msigdbr_categories_file" %in% args) {
-    
-    msigdbr_categories_file <- args[match("--msigdbr_categories_file", args) + 1]
-    
-  } else {
-    
-    msigdbr_categories_file <- ""
-    
-  }
-  
-  return(c(species, genome_annotation, sleuth_analysis, dexseq_analysis, pval, msigdbr_categories_file))
-  
-}
-
-### ---------------------------------------- ###
-
-loadOrgDB <- function(org) {
-  
-  if(org == "Homo_sapiens") {
-    library(org.Hs.eg.db)
-    return(org.Hs.eg.db)
-  } else if(org == "Mus_musculus") {
-    library(org.Mm.eg.db)
-    return(org.Mm.eg.db)
-  } else if(org == "Rattus_norvegicus") {
-    library(org.Rn.eg.db)
-    return(org.Rn.eg.db)
-  } else if(org == "Danio_rerio") {
-    library(org.Dr.eg.db)
-    return(org.Dr.eg.db)
-  } else if(org == "Drosophila_melanogaster") {
-    library(org.Dm.eg.db)
-    return(org.Dm.eg.db)
-  } else if(org == "Saccharomyces_cerevisiae") {
-    library(org.Sc.eg.db)
-    return(org.Sc.eg.db)
-  } else if(org == "Caenorhabditis_elegans") {
-    library(org.Ce.eg.db)
-    return(org.Ce.eg.db)
-  } else  {
-    print("Unrecognized species...")
-    quit(save = "no")
-  }
+  return(c(genome_annotation, sleuth_analysis, dexseq_analysis, pval))
   
 }
 
@@ -162,57 +116,16 @@ exportGeneList <- function(gtf_file, gl, out) {
   
 }
 
-### ---------------------------------------- ###
-
-runEnricher <- function(out, gl, t2g) {
-  
-  # Run analysis
-  enrichment <- enricher(gene = gl, TERM2GENE = t2g, pvalueCutoff = 0.1, pAdjustMethod = "BH", minGSSize = 10, maxGSSize = 1000)
-  
-  if(! is.null(enrichment)) {
-    
-    # Export file
-    write.table(enrichment, out, row.names = FALSE, sep='\t')
-    
-  }
-  
-  return(enrichment)
-  
-}
-
-### ---------------------------------------- ###
-
-runEnrichGO <- function(out, odb, ont, gl) {
-  
-  # Run analysis
-  enrichment <- enrichGO(gene = gl, ont = ont, OrgDb = odb, keyType = "ENSEMBL", pvalueCutoff = 0.1, pAdjustMethod = "BH", minGSSize = 10, maxGSSize = 1000)
-  
-  if(! is.null(enrichment)) {
-    
-    # Simplifying
-    enrichment <- clusterProfiler::simplify(enrichment, cutoff = 0.7)
-    
-    # Export file
-    write.table(enrichment, out, row.names = FALSE, sep='\t')
-    
-  }
-  
-  return(enrichment)
-  
-}
-
 ### ------------------MAIN------------------ ###
 
 library(msigdbr)
-library(clusterProfiler)
 library(enrichplot)
 
 ### PARSE ARGS ----------------------------- ###
 print("Parsing arguments")
 
 parameters <- parseArgs()
-species <- paste(strsplit(parameters[1], "_")[[1]], collapse = " ")
-analysis_name <- unlist(strsplit(parameters[3], '/'))
+analysis_name <- unlist(strsplit(parameters[2], '/'))
 analysis_name <- gsub("Sleuth_LRT_", "", analysis_name[length(analysis_name)])
 analysis_name <- gsub(".tsv", "", analysis_name)
 
@@ -220,44 +133,16 @@ analysis_name <- gsub(".tsv", "", analysis_name)
 
 print("Loading data")
 
-# Loading organism database
-org_db <- loadOrgDB(parameters[1])
-
-# Loading gene sets (all of them)
-if(species %in% msigdbr_species()$species_name) {
-  
-  all_gene_sets <- msigdbr(species = species)
-  
-} else {
-  
-  print("Unrecognized species...")
-  quit(save = "no")
-  
-}
-
-# Filtering gene sets for user-specified ones
-if(parameters[6] != "") {
-  
-  msigdbr_categories <- as.vector(read.table(parameters[6], sep='\t')[,1])
-  all_gene_sets <- all_gene_sets[(all_gene_sets$gs_cat %in% msigdbr_categories) |
-                                 (all_gene_sets$gs_subcat %in% msigdbr_categories) |
-                                 (all_gene_sets$gs_name %in% msigdbr_categories),]
-  
-}
-
-# Creating term2gene matrix for enricher, but removing GO terms. They'll be processed and simplified separately
-term2gene <- all_gene_sets[!(all_gene_sets$gs_subcat %in% c("GO:BP", "GO:MF", "GO:CC")), c("gs_name", "ensembl_gene")]
-
 # Load gtf genome annotation file and create a transcript_id to gene_id and exon_id to gene_id conversion tables
-conversion_tables <- loadGenomeAnnotation(parameters[2])
+conversion_tables <- loadGenomeAnnotation(parameters[1])
 
 # Load Sleuth DEA data, filtering for significant elements
-transcripts_data <- read.table(parameters[3], sep='\t', header=TRUE, check.names = FALSE)
+transcripts_data <- read.table(parameters[2], sep='\t', header=TRUE, check.names = FALSE)
 transcripts_data <- transcripts_data[transcripts_data$qval < as.numeric(parameters[5]),]
 
 # Load DEXSeq DEU data, filtering for significant elements
-exon_data <- read.table(parameters[4], sep='\t', header=TRUE, check.names = FALSE)
-exon_data <- exon_data[exon_data$padj < as.numeric(parameters[5]),]
+exon_data <- read.table(parameters[3], sep='\t', header=TRUE, check.names = FALSE)
+exon_data <- exon_data[exon_data$padj < as.numeric(parameters[4]),]
 
 ### INTERPOLATING DATA --------------------- ###
 
@@ -276,33 +161,8 @@ if(length(gene_list) == 0) {
 
 # Export gene list
 output_name <- paste("CommonGenes_", analysis_name, ".tsv", sep = "")
-exportGeneList(parameters[2], gene_list, output_name)
-
-### ENRICHMENT ANALYSIS -------------------- ###
-
-print("Running enrichment analyses")
-
-# Init lists of enrichment results to be saved as an RData object
-enrichment_analyses <- list()
-
-# Enrichment analysis
-output_name <- paste("Enrichment_", analysis_name, ".tsv", sep = "")
-enrichment_data <- runEnricher(output_name, gene_list, term2gene)
-
-data_name <- paste("Enrichment_AllSets_", analysis_name, sep = "")
-enrichment_analyses[[data_name]] <- enrichment_data
-
-# EnrichGO
-for(ontology in c("BP", "MF", "CC")) {
-  
-  output_name <- paste("Enrichment-GO", ontology, "_", analysis_name, ".tsv", sep = "")
-  runEnrichGO(output_name, org_db, ontology, gene_list)
-  
-  data_name <- paste("Enrichment-GO", ontology, "_", analysis_name, sep = "")
-  enrichment_analyses[[data_name]] <- enrichment_data
-  
-}
+exportGeneList(parameters[1], gene_list, output_name)
 
 # Saving datasets to RData object
 output_name <- paste("clusterProfiler_", analysis_name, '.RData.gz', sep = "")
-save(parameters, species, all_gene_sets, term2gene, conversion_tables, transcripts_data, exon_data, gene_list, enrichment_analyses, file = output_name, compress = T)
+save(parameters, species, all_gene_sets, conversion_tables, transcripts_data, exon_data, gene_list, file = output_name, compress = T)
