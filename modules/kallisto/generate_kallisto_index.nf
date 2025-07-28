@@ -2,6 +2,8 @@ process GenerateKallistoIndex {
 
   label 'kallisto'
 
+  publishDir "${projectDir}/${params.resources_dir}/${params.kallisto_index_subdir}", mode: "copy", pattern: "kallisto_index"
+
   input:
   path transcripts_fasta
 

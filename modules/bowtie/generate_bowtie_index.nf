@@ -2,6 +2,8 @@ process GenerateBowtie2Index {
 
   label 'bowtie'
 
+  publishDir "${projectDir}/${params.bowtie_index_subdir}", mode: "copy", pattern: "*.bt2"
+
   input:
   path genome_fasta
 

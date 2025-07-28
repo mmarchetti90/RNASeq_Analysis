@@ -8,6 +8,7 @@ include { GenerateStarIndex } from '../modules/star/generate_star_index.nf'
 include { RunSTAR } from '../modules/star/run_star_standard_rna.nf'
 include { MergeCounts as MergeGeneCounts } from '../modules/merge_counts/merge_counts.nf'
 include { RunDESeq2 } from '../modules/differential_analysis/run_deseq2.nf'
+include { CollapseExons } from '../modules/count_exons/collapse_exons.nf'
 include { CountExons } from '../modules/count_exons/count_exons.nf'
 include { MergeCounts as MergeExonCounts } from '../modules/merge_counts/merge_counts.nf'
 include { AddGeneInfo } from '../modules/count_exons/add_gene_info.nf'
@@ -124,14 +125,17 @@ workflow STANDARD {
   // Merge gene count files
   MergeGeneCounts(RunSTAR.out.gene_counts.collect(), "Gene")
 
+  // Collapse exons
+  CollapseExons(scripts_dir, genome_annotation)
+
   // Counting exons
-  CountExons(genome_annotation, RunSTAR.out.bam_files)
+  CountExons(CollapseExons.out.collapsed_exons, RunSTAR.out.bam_files)
 
   // Merge exon count files
   MergeExonCounts(CountExons.out.exon_counts.collect(), "Exon")
 
   // Add gene info to exon counts
-  AddGeneInfo(genome_annotation, MergeExonCounts.out.merged_counts)
+  AddGeneInfo(scripts_dir, CollapseExons.out.collapsed_exons, MergeExonCounts.out.merged_counts)
 
   // KALLISTO ALIGNMENT ------------------- //
 

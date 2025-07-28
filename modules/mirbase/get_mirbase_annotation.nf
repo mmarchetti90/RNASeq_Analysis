@@ -2,6 +2,8 @@ process GetMirBaseAnnotation {
 
   label 'python'
 
+  publishDir "${projectDir}/${params.resources_dir}/${params.mirbase_subdir}", mode: "copy", pattern: "gff3"
+
   output:
   path "*gff3", optional: true, emit: mirna_annotation
 
