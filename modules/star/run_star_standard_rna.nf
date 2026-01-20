@@ -24,7 +24,7 @@ process RunSTAR {
   if [[ \${temp: -2} == "gz" ]]
   then
 
-    if [[ "${read2}" == "mock.fastq" ]]
+    if [[ "${read2}" == "mock.trimmed.fastq" ]]
     then
 
       STAR \
@@ -57,7 +57,7 @@ process RunSTAR {
 
   else
 
-    if [[ "${read2}" == "mock.fastq" ]]
+    if [[ "${read2}" == "mock.trimmed.fastq" ]]
     then
 
       STAR \
